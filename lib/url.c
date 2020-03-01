@@ -771,9 +771,17 @@ static void conn_free(struct connectdata *conn)
 CURLcode Curl_disconnect(struct Curl_easy *data,
                          struct connectdata *conn, bool dead_connection)
 {
+  /* there must be a connection to close */
   DEBUGASSERT(conn);
+
+  /* it must be removed from the connection cache */
   DEBUGASSERT(!conn->bundle);
+
+  /* there must be an associated transfer */
   DEBUGASSERT(data);
+
+  /* the transfer must be detached from the connection */
+  DEBUGASSERT(!data->conn);
 
   /*
    * If this connection isn't marked to force-close, leave it open if there
@@ -3896,6 +3904,7 @@ CURLcode Curl_connect(struct Curl_easy *data,
   else if(result && conn) {
     /* We're not allowed to return failure with memory left allocated in the
        connectdata struct, free those here */
+    Curl_detach_connnection(data);
     Curl_conncache_remove_conn(data, conn, TRUE);
     Curl_disconnect(data, conn, TRUE);
   }
